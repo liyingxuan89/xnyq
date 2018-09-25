@@ -10,25 +10,26 @@ import collections
 import logging
 import matplotlib.pyplot as plt
 from datetime import datetime
+from basic_model import Basic
 
-class RJHB(object):
+class Rjhb(Basic):
 
     def __init__(self, table):
         """
         paras:
             table: numpy array or DataFrame that contains info of rijihuabiao;       
         """
-        self.__table = table
+        super(Rjhb, self).__init__(table)
         self.preprocess()
         self.__groupByCompany = None
         self.groupByCo()
 
     
-    def getTable(self):
-        """
-        fetch whole content of the table
-        """
-        return self.__table
+  # def getTable(self):
+  #      """
+  #      fetch whole content of the table
+  #      """
+  #      return self.__table
 
     def preprocess(self):
         """
@@ -40,33 +41,13 @@ class RJHB(object):
         data["time"] = data["year"] + data["month"] + data["day"]
         self.__table = data
 
-    def getItem(self, columnName):
-        """
-        fetch one column of the table by name;
-        paras:
-            column keyword;
-        return:
-            A Series of specified column;
-        """
-        data = self.getTable()
-        if columnName in data.columns:
-            return data[columnName]
-        else:
-            print columnName + " if an invalid keyword!!!"
-            raise KeyError
-
-    def displayItem(self):
-
-        data = self.getTable()
-        return data.columns
-
-    def NumOfRows(self):
-
-        data = self.getTable()
-        return len(data.index)
 
 
     def groupByCo(self):
+        """
+        return:
+            groups given class by Company;
+        """
         data = self.getTable()
         gdata  = data.groupby(data['company'])
         ret = dict(list(gdata))
@@ -74,6 +55,9 @@ class RJHB(object):
         #comInfo = gdata[companyId]
 
     def groupByDate(self, *args):
+        """
+        return:dict,grouped data by date; 
+        """
         data = self.getTable()
         if isinstance(args[0], tuple):
             args = args[0]
@@ -86,6 +70,8 @@ class RJHB(object):
         """
         paras:
             companyId: id of company;
+        return:
+            Company infomation of given company Id;
         """
         data = self.__groupByCompany
         companyInfo = data[companyId]
@@ -120,3 +106,9 @@ class RJHB(object):
         #print dates
         stats = data[dates]['volume'].describe()
         return stats
+
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()
