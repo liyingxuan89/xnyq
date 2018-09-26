@@ -10,64 +10,30 @@ import collections
 import logging
 import matplotlib.pyplot as plt
 from datetime import datetime
-from rjh import Rjhb
+from basic_model import Basic
 
-class Yql(Rjhb):
+class Yql(Basic):
 
     def __init__(self, table):
         """
         paras:
             table: numpy array or DataFrame that contains info of rijihuabiao;       
         """
-        self.__table = table
+        super(Yql, self).__init__(table)
         self.preprocess()
         self.__groupByCompany = None
         self.groupByCo()
 
-    
-    def getTable(self):
-        """
-        fetch whole content of the table
-        """
-        return self.__table
 
     def preprocess(self):
         """
         preprocesses;
         """
         data  = self.getTable()
-        data["month"] = pd.Series(["0"+x if int(x)<10 and len(x)<2 else x for x in data["month"]])
-        data["time"] = data["year"] + data["month"]
+        data = data.dropna(axis=0, how='all')
+        tempData = data[['online','lastMonthComsuption','delta','monthLastYear','tiaofeng']].fillna(value=0)
+        data[['online','lastMonthComsuption','delta','monthLastYear','tiaofeng']] = tempData
         self.__table = data
-
-    def getItem(self, columnName):
-        """
-        fetch one column of the table by name;
-        paras:
-            column keyword;
-        return:
-            A Series of specified column;
-        """
-        data = self.getTable()
-        if columnName in data.columns:
-            return data[columnName]
-        else:
-            print columnName + " if an invalid keyword!!!"
-            raise KeyError
-
-    def displayItem(self):
-        """
-        display features of this class;
-        """
-        data = self.getTable()
-        return data.columns
-
-    def NumOfRows(self):
-        """
-        get the total number of records;
-        """
-        data = self.getTable()
-        return len(data.index)
 
 
     def groupByCo(self):
@@ -76,7 +42,7 @@ class Yql(Rjhb):
             groups given class by Company;
         """
         data = self.getTable()
-        gdata  = data.groupby(data['company'])
+        gdata  = data.groupby(data['companyId'])
         ret = dict(list(gdata))
         self.__groupByCompany = ret
         #comInfo = gdata[companyId]
@@ -133,6 +99,25 @@ class Yql(Rjhb):
         #print dates
         stats = data[dates]['volume'].describe()
         return stats
+
+    def consumptionProportion(self, companyId, year=None):
+        """
+        paras:
+            companyId: int, Id of the company you want to caculate;
+            year: int, specify a year, otherwise the whole timelime will be caculate;
+        return:
+            the consumption proportion of one company in a year, which decript the inportance of that company;
+        """
+        data = self.getTable()
+        
+        if companyId:
+            companyInfo = data[data.companyId==companyId].groupby(['year']).sum()
+            consumption = companyInfo[companyInfo.index==year].loc[year,'consumption'] 
+        if year:
+            yearInfo = data.groupby(['year']).sum()
+            yearConsumption = yearInfo[yearInfo.index==year].loc[year,'consumption']
+        
+        return '{:.4%}'.format(consumption/yearConsumption)
 
 def main():
     pass
